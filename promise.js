@@ -6,11 +6,23 @@ function Promise(executor) {
   self.onRejectedCallback = [];
 
   function resolve(value) {
-    // TODO
+    if(self.status === 'pending') {
+      self.status = 'resolved';
+      self.data = value;
+      self.onResolvedCallback.forEach(fn => {
+        fn(value);
+      })
+    }
   }
 
   function reject(reason) {
-    // TODO
+    if(self.status === 'pending') {
+      self.status = 'rejected';
+      self.data = reason;
+      self.onRejectedCallback.forEach(fn => {
+        fn(reason);
+      })
+    }
   }
 
   try {
