@@ -10,7 +10,7 @@ function Promise(executor) {
       return value.then(resolve, reject)
     }
     setTimeout(function () {
-      if(self.status === 'pending') {
+      if (self.status === 'pending') {
         self.status = 'resolved';
         self.data = value;
         self.onResolvedCallback.forEach(fn => {
@@ -22,7 +22,7 @@ function Promise(executor) {
 
   function reject(reason) {
     setTimeout(() => {
-      if(self.status === 'pending') {
+      if (self.status === 'pending') {
         self.status = 'rejected';
         self.data = reason;
         self.onRejectedCallback.forEach(fn => {
@@ -46,27 +46,31 @@ Promise.prototype.then = function (onResolved, onRejected) {
   onResolved = typeof onResolved === 'function' ? onResolved : function (value) { return value; };
   onRejected = typeof onRejected === 'function' ? onRejected : function (reason) { return reason; };
 
-  if(self.status === 'resolved') {
+  if (self.status === 'resolved') {
     return promise2 = new Promise(function (resolve, reject) {
-      try {
-        let p = onResolved(self.data);
-        resolvePromise(promise2, p, resolve, reject);
-      } catch (e) {
-        reject(e);
-      }
+      setTimeout(function () { // 异步执行onResolved
+        try {
+          let p = onResolved(self.data);
+          resolvePromise(promise2, p, resolve, reject);
+        } catch (e) {
+          reject(e);
+        }
+      })
     })
   }
-  if(self.status === 'rejected') {
+  if (self.status === 'rejected') {
     return promise2 = new Promise(function (resolve, reject) {
-      try {
-        let p = onRejected(self.data);
-        resolvePromise(promise2, p, resolve, reject);
-      } catch (e) {
-        reject(e)
-      }
+      setTimeout(function () {
+        try {
+          let p = onRejected(self.data);
+          resolvePromise(promise2, p, resolve, reject);
+        } catch (e) {
+          reject(e)
+        }
+      })
     })
   }
-  if(self.status === 'pending') {
+  if (self.status === 'pending') {
     return promise2 = new Promise(function (resolve, reject) {
       self.onResolvedCallback.push(function (value) {
         try {
@@ -76,7 +80,7 @@ Promise.prototype.then = function (onResolved, onRejected) {
           reject(e)
         }
       })
-      self.onRejectedCallback.push(function(reason) {
+      self.onRejectedCallback.push(function (reason) {
         try {
           let p = onRejected(reason);
           resolvePromise(promise2, p, resolve, reject);
@@ -99,7 +103,7 @@ function resolvePromise(promise2, p, resolve, reject) {
 
   if (p instanceof Promise) {
     if (p.status === 'pending') { //because p could resolved by a Promise Object
-      p.then(function(v) {
+      p.then(function (v) {
         resolvePromise(promise2, v, resolve, reject)
       }, reject)
     } else { //but if it is resolved, it will never resolved by a Promise Object but a static value;
@@ -134,6 +138,6 @@ function resolvePromise(promise2, p, resolve, reject) {
   }
 }
 
-Promise.prototype.catch =  function (onRejected) {
+Promise.prototype.catch = function (onRejected) {
   return this.then(null, onRejected)
 }
